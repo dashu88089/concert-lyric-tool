@@ -1,6 +1,51 @@
 // ========== Data Store ==========
 const STORAGE_KEY = 'concert_lyric_projects';
 
+// ========== IndexedDB Audio Persistence ==========
+const DB_NAME = 'concert_lyric_audio';
+const DB_VERSION = 1;
+const DB_STORE = 'project_audio';
+
+function openAudioDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE, { keyPath: 'projectId' });
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function storeProjectAudio(projectId, file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const db = await openAudioDB();
+  const tx = db.transaction(DB_STORE, 'readwrite');
+  tx.objectStore(DB_STORE).put({
+    projectId,
+    filename: file.name,
+    blob: new Blob([arrayBuffer], { type: file.type }),
+  });
+  await new Promise((resolve, reject) => {
+    tx.oncomplete = resolve;
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function getProjectAudio(projectId) {
+  const db = await openAudioDB();
+  const tx = db.transaction(DB_STORE, 'readonly');
+  const store = tx.objectStore(DB_STORE);
+  return new Promise((resolve) => {
+    const request = store.get(projectId);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => resolve(null);
+  });
+}
+
 class ProjectStore {
   constructor() {
     this.projects = [];  // Array of { id, name, artist, mp3_name, songs[] }
@@ -274,6 +319,9 @@ function refreshUI() {
 
   // Update lyrics if current song selected
   updateLyricsPreview();
+
+  // Restore audio from IndexedDB if available
+  restoreProjectAudio();
 }
 
 function renderSongList(project) {
@@ -612,9 +660,20 @@ let isPlaying = false;
 let currentSpeed = 1;
 let currentSongIndex = -1;
 
-document.getElementById('audioFileInput').addEventListener('change', function(e) {
+document.getElementById('audioFileInput').addEventListener('change', async function(e) {
   const file = e.target.files[0];
   if (!file) return;
+
+  // Persist audio to IndexedDB for cross-session availability
+  const project = store.getCurrentProject();
+  if (project) {
+    store.updateProject(project.id, { mp3_name: file.name });
+    store.addAudioToProject(project.id, file.name);
+    try { await storeProjectAudio(project.id, file); } catch (err) {
+      console.warn('IndexedDB storage failed (file too large?):', err);
+    }
+  }
+
   const url = URL.createObjectURL(file);
   audio.src = url;
   audio.playbackRate = currentSpeed;
@@ -624,36 +683,29 @@ document.getElementById('audioFileInput').addEventListener('change', function(e)
 
   addAudioToList(file.name, '--:--');
 
-  const project = store.getCurrentProject();
-  if (project) {
-    store.updateProject(project.id, { mp3_name: file.name });
-    store.addAudioToProject(project.id, file.name);
-  }
   currentSongIndex = -1;
   updateMarkButton();
   document.getElementById('btnPlayPause').disabled = false;
-
-  // Handle pending play-after-load from playFromMark
-  if (window._pendingPlaySongId) {
-    const pendingId = window._pendingPlaySongId;
-    window._pendingPlaySongId = null;
-    audio.addEventListener('loadedmetadata', function onMeta() {
-      audio.removeEventListener('loadedmetadata', onMeta);
-      const p = store.getCurrentProject();
-      if (!p) return;
-      const s = p.songs.find(s => s.id === pendingId);
-      if (s && s.start_time > 0) {
-        audio.currentTime = s.start_time;
-        if (!isPlaying) togglePlay();
-        const songIdx = p.songs.findIndex(s => s.id === pendingId);
-        if (songIdx >= 0) {
-          currentSongIndex = songIdx;
-          updateLyricsPreview();
-        }
-      }
-    }, { once: true });
-  }
 });
+
+// Restore audio from IndexedDB on project load
+async function restoreProjectAudio() {
+  const project = store.getCurrentProject();
+  if (!project) return;
+  const stored = await getProjectAudio(project.id);
+  if (!stored) return;
+  // Avoid re-creating if already loaded in this session
+  if (audio.src && document.getElementById('currentSongName').textContent.includes(stored.filename)) return;
+  const blob = stored.blob;
+  const url = URL.createObjectURL(blob);
+  audio.src = url;
+  audio.playbackRate = currentSpeed;
+  document.getElementById('seekBar').value = 0;
+  document.getElementById('seekBar').max = 0;
+  document.getElementById('currentSongName').textContent = '🎵 ' + stored.filename;
+  document.getElementById('btnPlayPause').disabled = false;
+  updateMarkButton();
+}
 
 document.getElementById('btnAddAudio').addEventListener('click', () => {
   document.getElementById('audioFileInput').click();
@@ -818,9 +870,6 @@ function playFromMark(songId) {
   if (audio.src) {
     audio.currentTime = song.start_time;
     if (!isPlaying) togglePlay();
-  } else {
-    window._pendingPlaySongId = songId;
-    document.getElementById('audioFileInput').click();
   }
   updateLyricsPreview();
 }
