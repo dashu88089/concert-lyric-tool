@@ -232,6 +232,14 @@ function deleteProject(id) {
 
 // ========== UI Refresh ==========
 function refreshUI() {
+  // Reset audio state on project switch
+  currentSongIndex = -1;
+  if (isPlaying) {
+    audio.pause();
+    isPlaying = false;
+    document.getElementById('btnPlayPause').textContent = '▶';
+  }
+
   const project = store.getCurrentProject();
   if (!project) {
     document.getElementById('projectName').textContent = '未选择项目';
@@ -514,17 +522,22 @@ function finishImportStep2() {
   const project = store.getCurrentProject();
   if (!project) return;
 
-  store.addSongsToProject(project.id, parsedSongs);
+  // Only add songs to project for new imports, not re-imports of existing songs
+  if (!window._isReimport) {
+    store.addSongsToProject(project.id, parsedSongs);
+  }
+  window._isReimport = false;
 
   const savedSongs = store.getCurrentProject().songs;
+  const offset = savedSongs.length - parsedSongs.length;
   lyricsResults.forEach((result, i) => {
     if (!result) return;
-    const song = savedSongs[i];
+    const song = savedSongs[offset + i];
     if (!song) return;
     const updates = {
       lyrics_status: result.status === 'not_found' ? 'not_found' : 'confirmed',
-      lyrics_plain: result.lyricsText,
-      lyrics_lrc: result.lyricsText,
+      lyrics_plain: result.lyricsText || '',
+      lyrics_lrc: result.status === 'synced' ? (result.lyricsText || '') : '',
       lyrics_source: result.status === 'synced' ? 'lrclib' : (result.status === 'plain' ? 'lrclib_plain' : ''),
     };
     if (result.artist && result.artist !== project.artist) {
@@ -542,6 +555,7 @@ function openImportForSong(songId) {
   const project = store.getCurrentProject();
   const song = project.songs.find(s => s.id === songId);
   if (!song) return;
+  window._isReimport = true;
   parsedSongs = [song.title];
   renderImportStep2();
 }
