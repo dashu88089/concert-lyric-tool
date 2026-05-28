@@ -97,12 +97,12 @@ button { cursor: pointer; font-family: inherit; }
   padding: 6px 12px; background: #0f0f23; border-bottom: 1px solid #0f3460;
 }
 #songTableHeader {
-  display: grid; grid-template-columns: 30px 1fr 70px 60px 50px;
+  display: grid; grid-template-columns: 30px 1fr 70px 60px 90px;
   padding: 6px 12px; font-size: 11px; color: #666; border-bottom: 1px solid #0f3460;
 }
 #songList { flex: 1; overflow-y: auto; }
 .song-row {
-  display: grid; grid-template-columns: 30px 1fr 70px 60px 50px;
+  display: grid; grid-template-columns: 30px 1fr 70px 60px 90px;
   padding: 7px 12px; border-bottom: 1px solid #0f3460; font-size: 13px;
   align-items: center; cursor: pointer;
 }

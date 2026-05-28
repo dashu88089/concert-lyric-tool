@@ -292,13 +292,17 @@ function renderSongList(project) {
     };
     const timeStr = song.start_time > 0 ? formatTime(song.start_time) : '--:--';
     const needsImport = song.lyrics_status === 'pending' || song.lyrics_status === 'not_found';
+    const hasMark = song.start_time > 0;
+    let actionBtns = '';
+    if (hasMark) actionBtns += '<button class="btn-sm" onclick="playFromMark(' + song.id + ')">▶</button>';
+    if (needsImport) actionBtns += '<button class="btn-sm" onclick="openImportForSong(' + song.id + ')">导入</button>';
     html += `
       <div class="song-row" data-song-id="${song.id}">
         <span class="idx">${song.id}</span>
         <span class="title">${song.title}</span>
         <span class="time">${timeStr}</span>
         <span class="status">${statusMap[song.lyrics_status] || statusMap.pending}</span>
-        <span class="action">${needsImport ? '<button class="btn-sm" onclick="openImportForSong(' + song.id + ')">导入</button>' : ''}</span>
+        <span class="action" style="display:flex;gap:3px;">${actionBtns}</span>
       </div>
     `;
   });
@@ -774,6 +778,23 @@ function updateMarkButton() {
   }
   document.getElementById('btnMark').textContent = `🎵 标记第 ${nextIdx + 1} 首：${project.songs[nextIdx].title}`;
   document.getElementById('btnMark').disabled = false;
+}
+
+// ========== Play from Mark ==========
+function playFromMark(songId) {
+  const project = store.getCurrentProject();
+  if (!project) return;
+  if (!audio.src) { alert('请先加载音频文件'); return; }
+
+  const idx = project.songs.findIndex(s => s.id === songId);
+  if (idx < 0) return;
+  const song = project.songs[idx];
+  if (song.start_time <= 0) return;
+
+  currentSongIndex = idx;
+  audio.currentTime = song.start_time;
+  if (!isPlaying) togglePlay();
+  updateLyricsPreview();
 }
 
 // ========== Lyrics Preview ==========
