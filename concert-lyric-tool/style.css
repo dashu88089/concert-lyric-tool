@@ -206,7 +206,7 @@ button { cursor: pointer; font-family: inherit; }
 .progress-fill { height: 100%; background: #e94560; border-radius: 3px; transition: width 0.3s; }
 
 .lyrics-result-item {
-  display: grid; grid-template-columns: 28px 1fr 80px 60px 60px;
+  display: grid; grid-template-columns: 28px 1fr 80px 60px;
   padding: 8px 10px; border-bottom: 1px solid #0f3460; font-size: 13px;
   align-items: center; gap: 6px;
 }

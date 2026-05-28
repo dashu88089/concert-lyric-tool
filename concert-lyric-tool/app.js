@@ -192,7 +192,7 @@ document.getElementById('btnManageProjects').addEventListener('click', () => {
 function renderProjectList() {
   const projects = store.getAllProjects();
   if (projects.length === 0) {
-    modal.open('项目管理', '<div class="empty-state">暂无项目</div>', '');
+    modal.open('项目管理', '<div class="empty-state">暂无项目</div>', '<button onclick="modal.close()">关闭</button>');
     return;
   }
   let html = '';
@@ -292,7 +292,7 @@ function parsePlaylist(text) {
     .filter(line => line.length > 0);
 
   return lines.map(line => {
-    let title = line.replace(/^\d+[\.\-\、\)]\s*/, '');
+    let title = line.replace(/^\d+\s*[\.\-\、\)]\s*/, '');
     title = title.replace(/^\d{1,2}\s+/, '');
     return title.trim() || line;
   });
@@ -590,7 +590,22 @@ function addAudioToList(name, duration) {
   const item = document.createElement('div');
   item.className = 'audio-item current';
   list.querySelectorAll('.audio-item').forEach(el => el.classList.remove('current'));
-  item.innerHTML = `<span class="name">${escapeHtml(name)}</span><span class="dur">${duration}</span>`;
+  item.innerHTML = `<span class="name">${escapeHtml(name)}</span><span class="dur">${duration}</span><span class="audio-del" style="cursor:pointer;color:#ef9a9a;font-size:14px;">✕</span>`;
+  item.querySelector('.audio-del').addEventListener('click', function(e) {
+    e.stopPropagation();
+    item.remove();
+    if (list.querySelectorAll('.audio-item').length === 0) {
+      list.innerHTML = '<div class="empty-state">暂无音频文件</div>';
+    }
+    // If this was the current audio, reset player
+    if (audio.src && item.classList.contains('current')) {
+      audio.pause();
+      audio.src = '';
+      document.getElementById('currentSongName').textContent = '未加载音频';
+      document.getElementById('btnPlayPause').textContent = '▶';
+      isPlaying = false;
+    }
+  });
   item.addEventListener('click', function() {
     list.querySelectorAll('.audio-item').forEach(el => el.classList.remove('current'));
     this.classList.add('current');
