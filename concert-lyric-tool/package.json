@@ -1,0 +1,14 @@
+{
+  "name": "concert-lyric-tool",
+  "version": "1.0.0",
+  "description": "纯前端单页应用，用于加载演唱会音频、标记每首歌开始时间、检索歌词、导出带时间偏移的 LRC 文件。",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "type": "module",
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.7"
+  }
+}

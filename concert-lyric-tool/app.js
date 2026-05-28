@@ -132,6 +132,8 @@ class ProjectStore {
 
 // Global instance
 const store = new ProjectStore();
+globalThis.ProjectStore = ProjectStore;
+globalThis.store = store;
 
 // ========== Modal System ==========
 const modal = {
