@@ -784,7 +784,6 @@ function updateMarkButton() {
 function playFromMark(songId) {
   const project = store.getCurrentProject();
   if (!project) return;
-  if (!audio.src) { alert('请先加载音频文件'); return; }
 
   const idx = project.songs.findIndex(s => s.id === songId);
   if (idx < 0) return;
@@ -792,8 +791,10 @@ function playFromMark(songId) {
   if (song.start_time <= 0) return;
 
   currentSongIndex = idx;
-  audio.currentTime = song.start_time;
-  if (!isPlaying) togglePlay();
+  if (audio.src) {
+    audio.currentTime = song.start_time;
+    if (!isPlaying) togglePlay();
+  }
   updateLyricsPreview();
 }
 
