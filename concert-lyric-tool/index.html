@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>演唱会歌词标记工具</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Toolbar -->
+    <div id="toolbar">
+      <span id="appTitle">演唱会歌词标记工具</span>
+      <span id="projectName">未选择项目</span>
+      <div id="toolbarActions">
+        <button id="btnNewProject">新建项目</button>
+        <button id="btnImport">导入歌单</button>
+        <button id="btnManageProjects">项目管理</button>
+        <button id="btnExport">导出 LRC</button>
+      </div>
+    </div>
+
+    <!-- Main Content: Three Columns -->
+    <div id="mainContent">
+      <!-- Left: Audio File List -->
+      <div id="leftPanel">
+        <div class="panel-title">演唱会音频</div>
+        <div id="audioList">
+          <!-- Dynamically populated -->
+          <div class="empty-state">暂无音频文件</div>
+        </div>
+        <button id="btnAddAudio">＋ 添加音频</button>
+        <input type="file" id="audioFileInput" accept="audio/*" hidden>
+      </div>
+
+      <!-- Center: Player (top) + Song List (bottom) -->
+      <div id="centerPanel">
+        <div id="playerSection">
+          <div id="currentSongName" class="current-song-label">未加载音频</div>
+          <div id="playerControls">
+            <button id="btnPrev">⏮</button>
+            <button id="btnRewind">◀</button>
+            <button id="btnPlayPause">▶</button>
+            <button id="btnForward">▶️</button>
+            <button id="btnNext">⏭</button>
+          </div>
+          <div id="timeDisplay">00:00 / 00:00</div>
+          <div id="speedControl">
+            <button class="speed-btn active" data-speed="1">1x</button>
+            <button class="speed-btn" data-speed="0.8">0.8x</button>
+            <button class="speed-btn" data-speed="0.6">0.6x</button>
+          </div>
+          <button id="btnMark">🎵 标记下一首</button>
+        </div>
+
+        <div id="songSection">
+          <div class="section-title">歌曲列表</div>
+          <div id="songTableHeader">
+            <span>#</span><span>歌名</span><span>开始时间</span><span>歌词</span><span>操作</span>
+          </div>
+          <div id="songList"></div>
+        </div>
+      </div>
+
+      <!-- Right: Lyrics Preview -->
+      <div id="rightPanel">
+        <div id="lyricsHeader">歌词预览</div>
+        <div id="lyricsContent">
+          <div class="empty-state">暂无歌词</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Overlay -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div id="modalContent" class="modal">
+      <div id="modalHeader">
+        <span id="modalTitle"></span>
+        <span id="modalClose">&times;</span>
+      </div>
+      <div id="modalBody"></div>
+      <div id="modalFooter"></div>
+    </div>
+  </div>
+
+  <!-- Audio element for playback -->
+  <audio id="audioPlayer"></audio>
+
+  <script src="lyrics-api.js"></script>
+  <script src="lrc-export.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

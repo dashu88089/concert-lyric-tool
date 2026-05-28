@@ -1,0 +1,9 @@
+node_modules/
+tmp/
+test-results/
+*.log
+.DS_Store
+Thumbs.db
+*.mp3
+input/prototype.html
+output/

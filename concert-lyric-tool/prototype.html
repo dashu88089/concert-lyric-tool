@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>演唱会歌词标记工具 - 原型</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #1a1a2e; color: #e0e0e0; height: 100vh; overflow: hidden; }
+button { cursor: pointer; font-family: inherit; }
+
+#toolbar {
+  background: #16213e; padding: 8px 16px; display: flex; align-items: center;
+  gap: 12px; border-bottom: 1px solid #0f3460; height: 48px;
+}
+#toolbar .title { font-size: 15px; font-weight: bold; color: #e94560; }
+#toolbar .spacer { flex: 1; }
+#projectName { font-size: 13px; color: #888; }
+#toolbar button {
+  background: #0f3460; color: #e0e0e0; border: 1px solid #1a508b;
+  padding: 5px 12px; border-radius: 4px; font-size: 12px;
+}
+#toolbar button:hover { background: #1a508b; }
+
+#mainContent { display: flex; height: calc(100vh - 48px); }
+
+/* ===== Left: Audio List ===== */
+#leftPanel {
+  width: 220px; min-width: 220px; background: #16213e;
+  padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  border-right: 1px solid #0f3460;
+}
+#leftPanel .panel-title { font-size: 12px; color: #888; letter-spacing: 1px; margin-bottom: 4px; }
+#audioList { flex: 1; overflow-y: auto; }
+.audio-item {
+  display: flex; align-items: center; padding: 8px 10px; border-radius: 4px;
+  cursor: pointer; font-size: 13px; gap: 6px; margin-bottom: 2px;
+}
+.audio-item:hover { background: rgba(233,69,96,0.08); }
+.audio-item.current { background: rgba(233,69,96,0.15); }
+.audio-item .name { flex: 1; color: #e0e0e0; }
+.audio-item .dur { font-family: monospace; color: #888; font-size: 11px; }
+#btnAddAudio {
+  padding: 8px; font-size: 13px; border: 1px dashed #1a508b; border-radius: 4px;
+  background: transparent; color: #4fc3f7; text-align: center; margin-top: 4px;
+}
+#btnAddAudio:hover { background: rgba(79,195,247,0.05); }
+
+/* ===== Center: Player(top) + SongList(bottom) ===== */
+#centerPanel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+#playerSection {
+  padding: 12px; display: flex; flex-direction: column; gap: 10px;
+  border-bottom: 1px solid #0f3460; background: #1a1a2e;
+}
+#playerSection .current-song { font-size: 13px; color: #888; text-align: center; }
+#playerControls { display: flex; gap: 6px; justify-content: center; }
+#playerControls button {
+  width: 40px; height: 40px; border-radius: 50%; border: none;
+  font-size: 18px; background: #0f3460; color: #e0e0e0;
+  display: flex; align-items: center; justify-content: center;
+}
+#playerControls button:hover { background: #1a508b; }
+#playerControls .play-btn { width: 48px; height: 48px; font-size: 22px; background: #e94560; }
+#playerControls .play-btn:hover { background: #ff6b81; }
+#timeDisplay { font-family: monospace; font-size: 14px; color: #aaa; text-align: center; }
+#speedControl { display: flex; gap: 4px; justify-content: center; }
+#speedControl button {
+  padding: 4px 10px; font-size: 11px; border-radius: 3px;
+  background: #0f3460; color: #888; border: 1px solid transparent;
+}
+#speedControl button.active { border-color: #e94560; color: #e94560; }
+#btnMark {
+  width: 100%; padding: 12px 0; font-size: 15px; font-weight: bold;
+  background: #e94560; color: #fff; border: none; border-radius: 8px; letter-spacing: 1px;
+}
+#btnMark:hover { background: #ff6b81; }
+
+/* Song list */
+#songSection { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#songSection .section-title {
+  font-size: 11px; color: #666; letter-spacing: 1px;
+  padding: 6px 12px; background: #0f0f23; border-bottom: 1px solid #0f3460;
+}
+#songTableHead {
+  display: grid; grid-template-columns: 30px 1fr 70px 60px 50px;
+  padding: 6px 12px; font-size: 11px; color: #666; border-bottom: 1px solid #0f3460;
+}
+#songListBody { flex: 1; overflow-y: auto; }
+.song-row {
+  display: grid; grid-template-columns: 30px 1fr 70px 60px 50px;
+  padding: 7px 12px; border-bottom: 1px solid #0f3460; font-size: 13px;
+  align-items: center; cursor: pointer;
+}
+.song-row:hover { background: rgba(233,69,96,0.08); }
+.song-row.current { background: rgba(233,69,96,0.15); }
+.song-row .idx { color: #888; }
+.song-row .title { color: #e0e0e0; }
+.song-row .time { font-family: monospace; color: #e94560; font-size: 12px; }
+.song-row .action { text-align: center; }
+.btn-sm {
+  font-size: 11px; padding: 2px 8px; background: #0f3460; color: #aaa;
+  border: 1px solid #1a508b; border-radius: 3px; cursor: pointer;
+}
+.btn-sm:hover { color: #fff; }
+.status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; display: inline-block; }
+.status-badge.confirmed { background: #1b5e20; color: #81c784; }
+.status-badge.pending { background: #e65100; color: #ffb74d; }
+.status-badge.notfound { background: #b71c1c; color: #ef9a9a; }
+
+/* ===== Right: Lyrics ===== */
+#rightPanel {
+  width: 340px; min-width: 340px; background: #0f0f23; border-left: 1px solid #0f3460;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#rightPanel .panel-title { padding: 12px 16px; font-size: 13px; color: #888; border-bottom: 1px solid #0f3460; }
+#lyricsContent { flex: 1; padding: 16px; overflow-y: auto; line-height: 2; }
+.lyric-line {
+  padding: 3px 8px; font-size: 15px; color: #888; border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+.lyric-line.active { color: #fff; font-weight: bold; font-size: 16px; border-left-color: #e94560; background: rgba(233,69,96,0.1); }
+.lyric-line .time-tag { font-family: monospace; font-size: 11px; color: #555; margin-right: 8px; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 100;
+  justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #16213e; border-radius: 10px; min-width: 520px;
+  max-width: 860px; max-height: 85vh;
+  display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-header {
+  padding: 14px 20px; border-bottom: 1px solid #0f3460;
+  font-size: 15px; font-weight: bold; display: flex;
+  justify-content: space-between; align-items: center;
+}
+.modal-header .close { cursor: pointer; font-size: 22px; color: #888; }
+.modal-header .close:hover { color: #e94560; }
+.modal-wide { max-width: 900px !important; }
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; max-height: 60vh; }
+.modal-footer {
+  padding: 12px 20px; border-top: 1px solid #0f3460;
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+.modal-footer button {
+  padding: 7px 18px; border-radius: 4px; border: 1px solid #0f3460;
+  font-size: 13px; background: #0f3460; color: #e0e0e0;
+}
+.modal-footer button.primary { background: #e94560; border-color: #e94560; font-weight: bold; }
+.steps { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; }
+.step-dot {
+  width: 30px; height: 30px; border-radius: 50%; background: #0f3460;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; color: #888;
+}
+.step-dot.active { background: #e94560; color: #fff; }
+.step-dot.done { background: #1b5e20; color: #81c784; }
+.step-line { flex: 1; height: 2px; background: #0f3460; }
+.step-line.done { background: #1b5e20; }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; }
+.field textarea, .field input {
+  width: 100%; background: #1a1a2e; border: 1px solid #0f3460;
+  color: #e0e0e0; padding: 8px 10px; border-radius: 4px; font-size: 13px; font-family: inherit;
+}
+.field textarea { height: 180px; resize: vertical; line-height: 1.8; }
+.parsed-item {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  border-bottom: 1px solid #0f3460; font-size: 13px;
+}
+.parsed-item .p-idx { color: #888; min-width: 24px; }
+.parsed-item .p-title { color: #e0e0e0; flex: 1; }
+.lr-item {
+  display: grid; grid-template-columns: 28px 1fr 70px 50px;
+  padding: 8px 10px; border-bottom: 1px solid #0f3460; font-size: 13px;
+  align-items: center; gap: 6px;
+}
+.lr-item:hover { background: rgba(233,69,96,0.05); }
+.lr-item .idx { color: #888; }
+.lr-item .title { color: #e0e0e0; }
+.lr-item .artist { color: #888; font-size: 12px; }
+.lr-item .action a { color: #4fc3f7; cursor: pointer; font-size: 11px; }
+.search-progress { margin-bottom: 16px; }
+.progress-bar { height: 6px; background: #0f3460; border-radius: 3px; overflow: hidden; margin-top: 6px; }
+.progress-fill { height: 100%; background: #e94560; border-radius: 3px; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <span class="title">演唱会歌词标记工具</span>
+  <span id="projectName">刀郎 - 2025太原演唱会</span>
+  <span class="spacer"></span>
+  <button onclick="alert('新建项目（原型）')">新建项目</button>
+  <button onclick="showImportModal()">导入歌单</button>
+  <button onclick="alert('项目管理（原型）')">项目管理</button>
+  <button onclick="alert('导出 LRC（原型）')">导出 LRC</button>
+</div>
+
+<div id="mainContent">
+  <!-- Left: Audio List -->
+  <div id="leftPanel">
+    <div class="panel-title">演唱会音频</div>
+    <div id="audioList">
+      <div class="audio-item current">
+        <span class="name">刀郎太原演唱会.mp3</span>
+        <span class="dur">48:15</span>
+      </div>
+      <div class="audio-item">
+        <span class="name">周杰伦上海演唱会.mp3</span>
+        <span class="dur">1:52:30</span>
+      </div>
+      <div class="audio-item">
+        <span class="name">邓紫棋北京演唱会.mp3</span>
+        <span class="dur">1:38:20</span>
+      </div>
+    </div>
+    <button id="btnAddAudio" onclick="alert('选择 MP3 文件（原型）')">＋ 添加音频</button>
+  </div>
+
+  <!-- Center: Player + Song List -->
+  <div id="centerPanel">
+    <div id="playerSection">
+      <div class="current-song">🎵 刀郎太原演唱会.mp3</div>
+      <div id="playerControls">
+        <button>⏮</button>
+        <button>◀</button>
+        <button class="play-btn">▶</button>
+        <button>▶️</button>
+        <button>⏭</button>
+      </div>
+      <div id="timeDisplay">14:50 / 48:15</div>
+      <div id="speedControl">
+        <button class="active">1x</button>
+        <button>0.8x</button>
+        <button>0.6x</button>
+      </div>
+      <button id="btnMark" onclick="alert('标记下一首（原型）')">🎵 标记下一首</button>
+    </div>
+
+    <div id="songSection">
+      <div class="section-title">歌曲列表</div>
+      <div id="songTableHead">
+        <span>#</span><span>歌名</span><span>开始时间</span><span>歌词</span><span>操作</span>
+      </div>
+      <div id="songListBody">
+        <div class="song-row">
+          <span class="idx">1</span><span class="title">冲动的惩罚</span><span class="time">00:00</span>
+          <span><span class="status-badge confirmed">已确认</span></span>
+          <span class="action"><button class="btn-sm" onclick="showImportModal()">导入</button></span>
+        </div>
+        <div class="song-row">
+          <span class="idx">2</span><span class="title">披着羊皮的狼</span><span class="time">04:32</span>
+          <span><span class="status-badge confirmed">已确认</span></span>
+          <span class="action"><button class="btn-sm" onclick="showImportModal()">导入</button></span>
+        </div>
+        <div class="song-row">
+          <span class="idx">3</span><span class="title">西海情歌</span><span class="time">09:15</span>
+          <span><span class="status-badge pending">待确认</span></span>
+          <span class="action"><button class="btn-sm" onclick="showImportModal()">导入</button></span>
+        </div>
+        <div class="song-row current">
+          <span class="idx">4</span><span class="title">2002年的第一场雪</span><span class="time">14:50</span>
+          <span><span class="status-badge pending">待确认</span></span>
+          <span class="action"><button class="btn-sm" onclick="showImportModal()">导入</button></span>
+        </div>
+        <div class="song-row">
+          <span class="idx">5</span><span class="title">手心里的温柔</span><span class="time">--:--</span>
+          <span><span class="status-badge notfound">未标记</span></span>
+          <span class="action"><button class="btn-sm" onclick="showImportModal()">导入</button></span>
+        </div>
+        <div class="song-row">
+          <span class="idx">6</span><span class="title">爱是你我</span><span class="time">--:--</span>
+          <span><span class="status-badge notfound">未标记</span></span>
+          <span class="action"><button class="btn-sm" onclick="showImportModal()">导入</button></span>
+        </div>
+        <div class="song-row">
+          <span class="idx">7</span><span class="title">谢谢你</span><span class="time">--:--</span>
+          <span><span class="status-badge notfound">未标记</span></span>
+          <span class="action"><button class="btn-sm" onclick="showImportModal()">导入</button></span>
+        </div>
+        <div class="song-row">
+          <span class="idx">8</span><span class="title">喀什噶尔胡杨</span><span class="time">--:--</span>
+          <span><span class="status-badge notfound">未标记</span></span>
+          <span class="action"><button class="btn-sm" onclick="showImportModal()">导入</button></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Lyrics -->
+  <div id="rightPanel">
+    <div class="panel-title" id="rightPanelTitle">歌词预览 - 2002年的第一场雪</div>
+    <div id="lyricsContent">
+      <div class="lyric-line"><span class="time-tag">[00:00]</span>2002年的第一场雪</div>
+      <div class="lyric-line"><span class="time-tag">[04:05]</span>比以往时候来的更晚一些</div>
+      <div class="lyric-line"><span class="time-tag">[09:02]</span>停靠在八楼的二路汽车</div>
+      <div class="lyric-line"><span class="time-tag">[13:05]</span>带走了最后一片飘落的黄叶</div>
+      <div class="lyric-line active"><span class="time-tag">[18:05]</span>2002年的第一场雪</div>
+      <div class="lyric-line"><span class="time-tag">[22:05]</span>是留在乌鲁木齐难舍的情结</div>
+      <div class="lyric-line"><span class="time-tag">[27:05]</span>你像一只飞来飞去的蝴蝶</div>
+      <div class="lyric-line"><span class="time-tag">[31:05]</span>在白雪飘飞的季节里摇曳</div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="importStepTitle">导入与歌词确认</span>
+      <span class="close" onclick="closeImportModal()">&times;</span>
+    </div>
+    <div class="modal-body" id="importBody"></div>
+    <div class="modal-footer" id="importFooter"></div>
+  </div>
+</div>
+
+<script>
+let currentStep = 1;
+let parsedTitles = [];
+
+function showImportModal() {
+  currentStep = 1; parsedTitles = []; renderStep1();
+  document.getElementById('importModal').classList.add('active');
+}
+function closeImportModal() {
+  document.getElementById('importModal').classList.remove('active');
+}
+function renderStep1() {
+  document.getElementById('importStepTitle').textContent = '导入与歌词确认';
+  document.getElementById('importBody').innerHTML = `
+    <div class="steps">
+      <div class="step-dot active">1</div><div class="step-line"></div><div class="step-dot">2</div>
+    </div>
+    <div class="field"><label>歌手（全局）：刀郎</label></div>
+    <div class="field">
+      <label>粘贴歌单，每行一首：</label>
+      <textarea id="playlistInput">1. 冲动的惩罚\n2. 披着羊皮的狼\n3. 西海情歌\n4. 2002年的第一场雪\n5. 手心里的温柔</textarea>
+    </div>
+    <div style="margin-bottom:12px;">
+      <button onclick="parsePlaylist()" style="padding:6px 16px;background:#e94560;border:none;border-radius:4px;color:#fff;font-size:13px;">解析歌单</button>
+    </div>
+    <div id="parsedResult"></div>`;
+  document.getElementById('importFooter').innerHTML = `
+    <button onclick="closeImportModal()">取消</button>
+    <button class="primary" id="nextBtn" disabled>下一步</button>`;
+}
+function parsePlaylist() {
+  const text = document.getElementById('playlistInput').value;
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  parsedTitles = lines.map(l=>l.replace(/^\d+[\.\-\、\)]\s*/,'').replace(/^\d{1,2}\s+/,'').trim()||l);
+  let html = '<div style="margin-top:8px;"><h4 style="font-size:13px;color:#888;margin-bottom:8px;">解析结果：共 '+parsedTitles.length+' 首</h4>';
+  parsedTitles.forEach((t,i)=>{html+='<div class="parsed-item"><span class="p-idx">'+(i+1)+'</span><span class="p-title">'+t+'</span></div>';});
+  html+='</div>';
+  document.getElementById('parsedResult').innerHTML = html;
+  document.getElementById('nextBtn').disabled = false;
+}
+document.addEventListener('click', function(e) {
+  if(e.target.id==='nextBtn') renderStep2();
+  if(e.target.id==='prevBtn') renderStep1();
+});
+function renderStep2() {
+  currentStep = 2;
+  document.getElementById('importStepTitle').textContent = '歌词检索';
+  document.getElementById('importModal').querySelector('.modal').classList.add('modal-wide');
+  let items = '';
+  parsedTitles.forEach((t,i)=>{items+='<div class="lr-item" id="lr-'+i+'" onclick="showLyricPreview('+i+')"><span class="idx">'+(i+1)+'</span><span class="title">'+t+'</span><span class="artist">刀郎</span><span class="action"><a>查看</a></span></div>';});
+  document.getElementById('importBody').innerHTML = `
+    <div class="steps"><div class="step-dot done">1</div><div class="step-line done"></div><div class="step-dot active">2</div></div>
+    <div class="search-progress">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:#888;"><span>已检索完成</span><span>${parsedTitles.length}/${parsedTitles.length}</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    </div>
+    <div style="display:flex;gap:16px;min-height:320px;">
+      <div style="flex:1;overflow-y:auto;" id="lyricsResults">${items}</div>
+      <div style="flex:1;overflow-y:auto;border-left:1px solid #0f3460;padding-left:16px;" id="lyricsPreviewColumn">
+        <div style="color:#555;font-size:13px;padding:60px 0;text-align:center;">点击左侧歌曲「查看」预览歌词</div>
+      </div>
+    </div>`;
+  document.getElementById('importFooter').innerHTML = '<button id="prevBtn">上一步</button><button class="primary" onclick="finishImport()">完成</button>';
+}
+
+let previewIdx = -1;
+function showLyricPreview(idx) {
+  const lyrics = '[00:00.00]（示例歌词行）\n[00:04.50]（示例歌词行）\n[00:08.20]（示例歌词行）\n[00:12.50]（示例歌词行）';
+  const title = parsedTitles[idx];
+  previewIdx = idx;
+  // Highlight selected row
+  document.querySelectorAll('.lr-item').forEach(el=>el.style.background='');
+  const row = document.getElementById('lr-'+idx);
+  if (row) row.style.background = 'rgba(233,69,96,0.15)';
+  // Show lyrics in right column
+  document.getElementById('lyricsPreviewColumn').innerHTML = `
+    <div style="margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:bold;color:#e0e0e0;margin-bottom:4px;">${title}</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="previewArtist" style="flex:1;background:#1a1a2e;border:1px solid #0f3460;color:#e0e0e0;padding:3px 6px;border-radius:3px;font-size:12px;" value="刀郎">
+        <button onclick="reSearchLyrics()" style="font-size:12px;padding:3px 8px;background:#0f3460;border:1px solid #1a508b;border-radius:3px;color:#e0e0e0;">重新搜索</button>
+      </div>
+    </div>
+    <textarea spellcheck="false" style="width:100%;min-height:260px;background:#1a1a2e;border:1px solid #0f3460;color:#e0e0e0;padding:12px;border-radius:4px;font-size:13px;font-family:monospace;line-height:1.8;resize:vertical;box-sizing:border-box;">${lyrics}</textarea>`;
+}
+function reSearchLyrics() {
+  const a = document.getElementById('previewArtist').value;
+  const ta = document.querySelector('#lyricsPreviewColumn textarea');
+  if (ta) ta.value = '使用歌手 "'+a+'" 重新搜索...\n（原型演示）';
+}
+
+function finishImport() {
+  closeImportModal();
+  alert('✅ 导入完成！歌单+歌词已导入，现在可以开始标记。');
+}
+document.getElementById('importModal').addEventListener('click',function(e){if(e.target===this)closeImportModal();});
+</script>
+</body>
+</html>

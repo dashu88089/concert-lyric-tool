@@ -1,0 +1,236 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #1a1a2e; color: #e0e0e0; height: 100vh; overflow: hidden; }
+button { cursor: pointer; font-family: inherit; }
+
+/* ========== Top Toolbar ========== */
+#toolbar {
+  background: #16213e; padding: 8px 16px; display: flex; align-items: center;
+  gap: 12px; border-bottom: 1px solid #0f3460; height: 48px;
+}
+#appTitle { font-size: 15px; font-weight: bold; color: #e94560; }
+#projectName { font-size: 13px; color: #888; flex: 1; }
+#toolbarActions { display: flex; gap: 6px; }
+#toolbarActions button {
+  background: #0f3460; color: #e0e0e0; border: 1px solid #1a508b;
+  padding: 5px 12px; border-radius: 4px; font-size: 12px;
+}
+#toolbarActions button:hover { background: #1a508b; }
+
+/* ========== Main Content: Three Columns ========== */
+#mainContent { display: flex; height: calc(100vh - 48px); }
+
+/* ===== Left Panel - Audio File List ===== */
+#leftPanel {
+  width: 220px; min-width: 220px; background: #16213e;
+  padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  border-right: 1px solid #0f3460;
+}
+.panel-title { font-size: 12px; color: #888; letter-spacing: 1px; margin-bottom: 4px; }
+#audioList { flex: 1; overflow-y: auto; }
+.audio-item {
+  display: flex; align-items: center; padding: 8px 10px; border-radius: 4px;
+  cursor: pointer; font-size: 13px; gap: 6px; margin-bottom: 2px;
+}
+.audio-item:hover { background: rgba(233,69,96,0.08); }
+.audio-item.current { background: rgba(233,69,96,0.15); }
+.audio-item .name { flex: 1; color: #e0e0e0; }
+.audio-item .dur { font-family: monospace; color: #888; font-size: 11px; }
+#btnAddAudio {
+  padding: 8px; font-size: 13px; border: 1px dashed #1a508b; border-radius: 4px;
+  background: transparent; color: #4fc3f7; text-align: center; margin-top: 4px;
+}
+#btnAddAudio:hover { background: rgba(79,195,247,0.05); }
+
+/* ===== Center Panel - Player(top) + SongList(bottom) ===== */
+#centerPanel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+#playerSection {
+  padding: 12px; display: flex; flex-direction: column; gap: 10px;
+  border-bottom: 1px solid #0f3460; background: #1a1a2e;
+}
+.current-song-label { font-size: 13px; color: #888; text-align: center; }
+
+#playerControls { display: flex; gap: 6px; justify-content: center; }
+#playerControls button {
+  width: 40px; height: 40px; border-radius: 50%; border: none;
+  font-size: 18px; background: #0f3460; color: #e0e0e0;
+  display: flex; align-items: center; justify-content: center;
+}
+#playerControls button:hover { background: #1a508b; }
+#btnPlayPause { width: 48px; height: 48px; font-size: 22px; background: #e94560; }
+#btnPlayPause:hover { background: #ff6b81; }
+
+#timeDisplay { font-family: monospace; font-size: 14px; color: #aaa; text-align: center; }
+
+#speedControl { display: flex; gap: 4px; justify-content: center; }
+.speed-btn {
+  padding: 4px 10px; font-size: 11px; border-radius: 3px;
+  background: #0f3460; color: #888; border: 1px solid transparent;
+}
+.speed-btn.active { border-color: #e94560; color: #e94560; }
+.speed-btn:hover { color: #e0e0e0; }
+
+#btnMark {
+  width: 100%; padding: 12px 0; font-size: 15px; font-weight: bold;
+  background: #e94560; color: #fff; border: none; border-radius: 8px; letter-spacing: 1px;
+}
+#btnMark:hover { background: #ff6b81; }
+#btnMark:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+/* Song Section */
+#songSection { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.section-title {
+  font-size: 11px; color: #666; letter-spacing: 1px;
+  padding: 6px 12px; background: #0f0f23; border-bottom: 1px solid #0f3460;
+}
+#songTableHeader {
+  display: grid; grid-template-columns: 30px 1fr 70px 60px 50px;
+  padding: 6px 12px; font-size: 11px; color: #666; border-bottom: 1px solid #0f3460;
+}
+#songList { flex: 1; overflow-y: auto; }
+.song-row {
+  display: grid; grid-template-columns: 30px 1fr 70px 60px 50px;
+  padding: 7px 12px; border-bottom: 1px solid #0f3460; font-size: 13px;
+  align-items: center; cursor: pointer;
+}
+.song-row:hover { background: rgba(233,69,96,0.08); }
+.song-row.current { background: rgba(233,69,96,0.15); }
+.song-row .idx { color: #888; }
+.song-row .title { color: #e0e0e0; }
+.song-row .time { font-family: monospace; color: #e94560; font-size: 12px; }
+.btn-sm {
+  font-size: 11px; padding: 2px 8px; background: #0f3460; color: #aaa;
+  border: 1px solid #1a508b; border-radius: 3px; cursor: pointer;
+}
+.btn-sm:hover { color: #fff; }
+
+.status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+.status-badge.confirmed { background: #1b5e20; color: #81c784; }
+.status-badge.pending { background: #e65100; color: #ffb74d; }
+.status-badge.notfound { background: #b71c1c; color: #ef9a9a; }
+
+.empty-state { padding: 40px; text-align: center; color: #555; font-size: 14px; }
+
+/* Right Panel - Lyrics */
+#rightPanel {
+  width: 340px; min-width: 340px; background: #0f0f23; border-left: 1px solid #0f3460;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#lyricsHeader {
+  padding: 12px 16px; font-size: 13px; color: #888;
+  border-bottom: 1px solid #0f3460;
+}
+#lyricsContent {
+  flex: 1; padding: 16px; overflow-y: auto; line-height: 2;
+}
+.lyric-line {
+  padding: 3px 8px; font-size: 15px; color: #888; border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+.lyric-line.active {
+  color: #fff; font-weight: bold; font-size: 16px;
+  border-left-color: #e94560; background: rgba(233,69,96,0.1);
+}
+.lyric-line .lyric-time { font-family: monospace; font-size: 11px; color: #555; margin-right: 8px; }
+
+/* ========== Modal ========== */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 100;
+  justify-content: center; align-items: center;
+}
+.modal-overlay.active { display: flex; }
+#modalContent {
+  background: #16213e; border-radius: 10px; min-width: 520px;
+  max-width: 700px; max-height: 85vh;
+  display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.modal-wide { max-width: 900px !important; }
+#modalHeader {
+  padding: 14px 20px; border-bottom: 1px solid #0f3460;
+  font-size: 15px; font-weight: bold; display: flex;
+  justify-content: space-between; align-items: center;
+}
+#modalClose { cursor: pointer; font-size: 22px; color: #888; }
+#modalClose:hover { color: #e94560; }
+#modalBody { padding: 20px; overflow-y: auto; flex: 1; max-height: 60vh; }
+#modalFooter {
+  padding: 12px 20px; border-top: 1px solid #0f3460;
+  display: flex; gap: 8px; justify-content: flex-end;
+}
+#modalFooter button {
+  padding: 7px 18px; border-radius: 4px; border: 1px solid #0f3460;
+  font-size: 13px; background: #0f3460; color: #e0e0e0;
+}
+#modalFooter button.primary { background: #e94560; border-color: #e94560; font-weight: bold; }
+#modalFooter button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Step Indicator */
+.step-indicator { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; }
+.step-dot {
+  width: 30px; height: 30px; border-radius: 50%; background: #0f3460;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #888;
+}
+.step-dot.active { background: #e94560; color: #fff; }
+.step-dot.done { background: #1b5e20; color: #81c784; }
+.step-line { flex: 1; height: 2px; background: #0f3460; }
+.step-line.done { background: #1b5e20; }
+
+/* Import Step 1 */
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; }
+.field textarea, .field input {
+  width: 100%; background: #1a1a2e; border: 1px solid #0f3460;
+  color: #e0e0e0; padding: 8px 10px; border-radius: 4px; font-size: 13px;
+  font-family: inherit;
+}
+.field textarea { height: 200px; resize: vertical; line-height: 1.8; }
+
+.parsed-list { margin-top: 12px; }
+.parsed-item {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  border-bottom: 1px solid #0f3460; font-size: 13px;
+}
+.parsed-item .p-idx { color: #888; min-width: 24px; }
+.parsed-item .p-title { flex: 1; }
+.parsed-item .p-title input {
+  background: transparent; border: 1px solid transparent; color: #e0e0e0;
+  font-size: 13px; padding: 2px 4px; width: 100%;
+}
+.parsed-item .p-title input:focus { border-color: #1a508b; outline: none; background: #1a1a2e; border-radius: 2px; }
+
+/* Import Step 2 - Lyrics Search Results */
+.search-progress { margin-bottom: 16px; }
+.progress-bar { height: 6px; background: #0f3460; border-radius: 3px; overflow: hidden; margin-top: 6px; }
+.progress-fill { height: 100%; background: #e94560; border-radius: 3px; transition: width 0.3s; }
+
+.lyrics-result-item {
+  display: grid; grid-template-columns: 28px 1fr 80px 60px 60px;
+  padding: 8px 10px; border-bottom: 1px solid #0f3460; font-size: 13px;
+  align-items: center; gap: 6px;
+}
+.lyrics-result-item:hover { background: rgba(233,69,96,0.05); }
+.lyrics-result-item .lr-idx { color: #888; }
+.lyrics-result-item .lr-title { color: #e0e0e0; }
+.lyrics-result-item .lr-artist { color: #888; font-size: 12px; }
+.lyrics-result-item .lr-status { font-size: 11px; }
+
+/* Project Management */
+.project-list-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-bottom: 1px solid #0f3460;
+  cursor: pointer; font-size: 13px;
+}
+.project-list-item:hover { background: rgba(233,69,96,0.05); }
+.project-list-item .pl-name { flex: 1; color: #e0e0e0; }
+.project-list-item .pl-artist { color: #888; font-size: 12px; }
+.project-list-item .pl-count { color: #555; font-size: 11px; }
+.project-list-item .pl-delete { color: #ef9a9a; cursor: pointer; font-size: 11px; }
+.project-list-item .pl-delete:hover { color: #ff5252; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #0f3460; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #1a508b; }
