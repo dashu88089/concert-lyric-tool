@@ -632,6 +632,27 @@ document.getElementById('audioFileInput').addEventListener('change', function(e)
   currentSongIndex = -1;
   updateMarkButton();
   document.getElementById('btnPlayPause').disabled = false;
+
+  // Handle pending play-after-load from playFromMark
+  if (window._pendingPlaySongId) {
+    const pendingId = window._pendingPlaySongId;
+    window._pendingPlaySongId = null;
+    audio.addEventListener('loadedmetadata', function onMeta() {
+      audio.removeEventListener('loadedmetadata', onMeta);
+      const p = store.getCurrentProject();
+      if (!p) return;
+      const s = p.songs.find(s => s.id === pendingId);
+      if (s && s.start_time > 0) {
+        audio.currentTime = s.start_time;
+        if (!isPlaying) togglePlay();
+        const songIdx = p.songs.findIndex(s => s.id === pendingId);
+        if (songIdx >= 0) {
+          currentSongIndex = songIdx;
+          updateLyricsPreview();
+        }
+      }
+    }, { once: true });
+  }
 });
 
 document.getElementById('btnAddAudio').addEventListener('click', () => {
@@ -678,7 +699,10 @@ document.addEventListener('keydown', function(e) {
 });
 
 function togglePlay() {
-  if (!audio.src) { alert('请先加载音频文件'); return; }
+  if (!audio.src) {
+    document.getElementById('audioFileInput').click();
+    return;
+  }
   if (isPlaying) {
     audio.pause();
   } else {
@@ -794,6 +818,9 @@ function playFromMark(songId) {
   if (audio.src) {
     audio.currentTime = song.start_time;
     if (!isPlaying) togglePlay();
+  } else {
+    window._pendingPlaySongId = songId;
+    document.getElementById('audioFileInput').click();
   }
   updateLyricsPreview();
 }
