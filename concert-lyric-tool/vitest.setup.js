@@ -8,7 +8,7 @@ const elementIds = [
   'songTableHeader', 'btnNewProject', 'btnImport', 'btnManageProjects',
   'btnExport', 'btnAddAudio', 'audioFileInput', 'btnPrev', 'btnRewind',
   'btnForward', 'btnNext', 'btnStep1Next', 'btnParsePlaylist',
-  'playlistInput', 'parsedResult', 'step1Content',
+  'playlistInput', 'parsedResult', 'step1Content', 'seekBar',
 ];
 
 elementIds.forEach(id => {

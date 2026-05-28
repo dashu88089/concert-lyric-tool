@@ -45,6 +45,7 @@ class ProjectStore {
       name: name,
       artist: artist,
       mp3_name: '',
+      audioFiles: [],
       songs: [],
       createdAt: Date.now(),
     };
@@ -85,6 +86,17 @@ class ProjectStore {
     Object.assign(project, updates);
     this.save();
     return true;
+  }
+
+  // Add audio filename to project's audio list
+  addAudioToProject(projectId, filename) {
+    const project = this.projects.find(p => p.id === projectId);
+    if (!project) return;
+    if (!project.audioFiles) project.audioFiles = [];
+    if (!project.audioFiles.includes(filename)) {
+      project.audioFiles.push(filename);
+      this.save();
+    }
   }
 
   // Add songs to project
@@ -241,6 +253,7 @@ function refreshUI() {
     isPlaying = false;
     document.getElementById('btnPlayPause').textContent = '▶';
   }
+  document.getElementById('seekBar').value = 0;
 
   const project = store.getCurrentProject();
   if (!project) {
@@ -255,6 +268,9 @@ function refreshUI() {
 
   // Render song list
   renderSongList(project);
+
+  // Restore audio list from project data
+  renderAudioList(project);
 
   // Update lyrics if current song selected
   updateLyricsPreview();
@@ -293,6 +309,23 @@ function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function renderAudioList(project) {
+  const container = document.getElementById('audioList');
+  if (!project.audioFiles || project.audioFiles.length === 0) {
+    container.innerHTML = '<div class="empty-state">暂无音频文件</div>';
+    return;
+  }
+  let html = '';
+  project.audioFiles.forEach(name => {
+    const isCurrent = audio.src && name === document.getElementById('currentSongName').textContent.replace('🎵 ', '');
+    html += `<div class="audio-item${isCurrent ? ' current' : ''}">
+      <span class="name">${escapeHtml(name)}</span>
+      <span class="dur">--:--</span>
+    </div>`;
+  });
+  container.innerHTML = html;
 }
 
 // ========== Playlist Parser ==========
@@ -581,6 +614,8 @@ document.getElementById('audioFileInput').addEventListener('change', function(e)
   const url = URL.createObjectURL(file);
   audio.src = url;
   audio.playbackRate = currentSpeed;
+  document.getElementById('seekBar').value = 0;
+  document.getElementById('seekBar').max = 0;
   document.getElementById('currentSongName').textContent = '🎵 ' + file.name;
 
   addAudioToList(file.name, '--:--');
@@ -588,6 +623,7 @@ document.getElementById('audioFileInput').addEventListener('change', function(e)
   const project = store.getCurrentProject();
   if (project) {
     store.updateProject(project.id, { mp3_name: file.name });
+    store.addAudioToProject(project.id, file.name);
   }
   currentSongIndex = -1;
   updateMarkButton();
@@ -652,7 +688,17 @@ audio.addEventListener('timeupdate', () => {
   const current = formatTime(audio.currentTime);
   const total = formatTime(audio.duration || 0);
   document.getElementById('timeDisplay').textContent = `${current} / ${total}`;
+  document.getElementById('seekBar').value = audio.currentTime || 0;
   updateLyricsHighlight(audio.currentTime);
+});
+
+audio.addEventListener('loadedmetadata', () => {
+  document.getElementById('seekBar').max = audio.duration || 0;
+});
+
+document.getElementById('seekBar').addEventListener('input', function() {
+  const seekTime = parseFloat(this.value);
+  audio.currentTime = seekTime;
 });
 
 document.querySelectorAll('.speed-btn').forEach(btn => {
@@ -829,3 +875,6 @@ document.addEventListener('click', function(e) {
     row.classList.add('current');
   }
 });
+
+// Initialize: load current project on page refresh
+refreshUI();
